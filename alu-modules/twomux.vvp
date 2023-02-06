@@ -1,0 +1,69 @@
+#! /opt/homebrew/Cellar/icarus-verilog/11.0/bin/vvp
+:ivl_version "11.0 (stable)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/system.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/vhdl_sys.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/vhdl_textio.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/v2005_math.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/va_math.vpi";
+S_0x123e096a0 .scope module, "twowaymux_tb" "twowaymux_tb" 2 1;
+ .timescale 0 0;
+L_0x128078010 .functor BUFT 1, C4<1>, C4<0>, C4<0>, C4<0>;
+v0x123e1d360_0 .net "a", 0 0, L_0x128078010;  1 drivers
+L_0x128078058 .functor BUFT 1, C4<0>, C4<0>, C4<0>, C4<0>;
+v0x123e1d400_0 .net "b", 0 0, L_0x128078058;  1 drivers
+v0x123e1d4b0_0 .net "out", 0 0, L_0x123e1d8c0;  1 drivers
+v0x123e1d580_0 .var "select", 0 0;
+S_0x123e09810 .scope module, "mux" "twowaymux" 2 8, 3 1 0, S_0x123e096a0;
+ .timescale 0 0;
+    .port_info 0 /INPUT 1 "a";
+    .port_info 1 /INPUT 1 "b";
+    .port_info 2 /INPUT 1 "sel";
+    .port_info 3 /OUTPUT 1 "out";
+L_0x123e1d6b0 .functor AND 1, L_0x128078058, v0x123e1d580_0, C4<1>, C4<1>;
+L_0x123e1d760 .functor AND 1, L_0x128078010, L_0x123e1d810, C4<1>, C4<1>;
+L_0x123e1d810 .functor NOT 1, v0x123e1d580_0, C4<0>, C4<0>, C4<0>;
+L_0x123e1d8c0 .functor OR 1, L_0x123e1d6b0, L_0x123e1d760, C4<0>, C4<0>;
+v0x123e07eb0_0 .net "a", 0 0, L_0x128078010;  alias, 1 drivers
+v0x123e1cf10_0 .net "b", 0 0, L_0x128078058;  alias, 1 drivers
+v0x123e1cfb0_0 .net "out", 0 0, L_0x123e1d8c0;  alias, 1 drivers
+v0x123e1d060_0 .net "sbar", 0 0, L_0x123e1d810;  1 drivers
+v0x123e1d100_0 .net "sel", 0 0, v0x123e1d580_0;  1 drivers
+v0x123e1d1e0_0 .net "w1", 0 0, L_0x123e1d6b0;  1 drivers
+v0x123e1d280_0 .net "w2", 0 0, L_0x123e1d760;  1 drivers
+    .scope S_0x123e096a0;
+T_0 ;
+    %pushi/vec4 1, 0, 1;
+    %store/vec4 v0x123e1d580_0, 0, 1;
+    %delay 20, 0;
+    %load/vec4 v0x123e1d4b0_0;
+    %load/vec4 v0x123e1d400_0;
+    %cmp/e;
+    %jmp/0xz  T_0.0, 4;
+    %vpi_call 2 14 "$display", "CORRECT OUTPUT - Select bit = 1" {0 0 0};
+    %jmp T_0.1;
+T_0.0 ;
+    %vpi_call 2 16 "$display", "INCORRECT OUTPUT - Select bit = 1" {0 0 0};
+T_0.1 ;
+    %load/vec4 v0x123e1d580_0;
+    %inv;
+    %store/vec4 v0x123e1d580_0, 0, 1;
+    %delay 20, 0;
+    %load/vec4 v0x123e1d4b0_0;
+    %load/vec4 v0x123e1d360_0;
+    %cmp/e;
+    %jmp/0xz  T_0.2, 4;
+    %vpi_call 2 22 "$display", "CORRECT OUTPUT - Select bit = 0" {0 0 0};
+    %jmp T_0.3;
+T_0.2 ;
+    %vpi_call 2 24 "$display", "INCORRECT OUTPUT - Select bit = 0" {0 0 0};
+T_0.3 ;
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "twowaymux_tb.v";
+    "twowaymux.v";
