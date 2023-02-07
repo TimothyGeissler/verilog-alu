@@ -6,7 +6,7 @@ not (sbar, sel);
 or (out, w1, w2);
 endmodule
 
-module sll();
+module sll(); //https://esrd2014.blogspot.com/p/barrel-shifter.html
     input [31:0] in
     output [31:0] out;
     input [4:0] select; //5 bits shiftamount = 5 layers of mux
