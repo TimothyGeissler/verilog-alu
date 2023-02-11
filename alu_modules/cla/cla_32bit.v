@@ -1,11 +1,49 @@
-module CLA_Adder(a,b,cin,sum,cout, G0, P0);
-input[7:0] a, b;
+`timescale 1ns / 1ps
+module cla_32bit(a, b, cin, sum, cout, neq, lt, ovf);
+input [31:0] a,b;
+input cin;
+output [31:0] sum;
+output cout; // overflow flag
+output neq, lt, ovf; // neq = 1 if A - B < 0, lt = 1 if A - B = 0
+wire c1,c2,c3;
+reg zero = 32'd0;
+
+/*if (sum[31] == 1'b1) begin
+    assign lt = 1;
+end else begin
+    assign lt = 0;
+end*/
+assign lt = sum[31];
+
+/*if (sum == 0) begin 
+    assign eq = 1;
+end else begin
+    assign eq = 0;
+end*/
+assign neq = sum ? 1 : 0;
+
+//Calculate overflow
+wire inputAnd;
+and(inputAnd, a[31], b[31]);
+xor(ovf, inputAnd, sum[31]);
+
+
+cla_8bit cla1 (.a(a[7:0]), .b(b[7:0]), .cin(cin), .sum(sum[7:0]), .cout(c1));
+cla_8bit cla2 (.a(a[15:8]), .b(b[15:8]), .cin(c1), .sum(sum[15:8]), .cout(c2));
+cla_8bit cla3(.a(a[23:16]), .b(b[23:16]), .cin(c2), .sum(sum[23:16]), .cout(c3));
+cla_8bit cla4(.a(a[31:24]), .b(b[31:24]), .cin(c3), .sum(sum[31:24]), .cout(cout));
+
+endmodule
+
+module cla_8bit(a, b, cin, sum, cout);
+input [7:0] a,b;
 input cin;
 output [7:0] sum;
-output cout, G0, P0;
-wire [7:0] p, g;
-wire [8:0] c;
+output cout;
 
+wire [8:0] p,g,c;
+
+// Assign
 genvar i;
 generate
     for (i = 0; i < 8; i = i + 1) begin
@@ -19,71 +57,25 @@ generate
     end
 endgenerate
 
-and(P0, p[7], p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
-wire [7:0] gW;
-and(gW[1], p[7], p[6], g[5]);
-and(gW[2], p[7], p[6], p[5], g[4]);
-and(gW[3], p[7], p[6], p[5], p[4], g[3]);
-and(gW[4], p[7], p[6], p[5], p[4], p[3], g[2]);
-and(gW[5], p[7], p[6], p[5], p[4], p[3], p[2], g[1]);
-and(gW[6], p[7], p[6], p[5], p[4], p[3], p[2], p[1], g[0]);
-and(gW[7], p[7], p[6], p[5], p[4], p[3], p[2], p[1], p[0], cin);
-or(G0, g[7], gW[0], gW[1], gW[2], gW[3], gW[4], gW[5], gW[6], gW[7]);
-
-
-//assign {andOut} = g[8:0];
-
-/*xor(p[0], a[0], b[0]);
-xor(p[1], a[1], b[1]);
-xor(p[2], a[2], b[2]);
-xor(p[3], a[3], b[3]);
-xor(p[4], a[4], b[4]);
-xor(p[5], a[5], b[5]);
-xor(p[6], a[6], b[6]);
-xor(p[7], a[7], b[7]);
-xor(p[8], a[8], b[8]);
-
-and(g[0], a[0], b[0]);
-and(g[1], a[1], b[1]);
-and(g[2], a[2], b[2]);
-and(g[3], a[3], b[3]);
-and(g[4], a[4], b[4]);
-and(g[5], a[5], b[5]);
-and(g[6], a[6], b[6]);
-and(g[7], a[7], b[7]);
-and(g[8], a[8], b[8]);
-
-xor(sum[0], p[0], c[0]);
-xor(sum[1], p[1], c[1]);
-xor(sum[2], p[2], c[2]);
-xor(sum[3], p[3], c[3]);
-xor(sum[4], p[4], c[4]);
-xor(sum[5], p[5], c[5]);
-xor(sum[6], p[6], c[6]);
-xor(sum[7], p[7], c[7]);
-xor(sum[8], p[8], c[8]);*/
+//carry=gi + Pi.ci
 
 assign c[0]=cin;
 
-//c1=g0|(p0&cin),
 wire w1;
 and(w1, p[0], cin);
 or(c[1], g[0], w1);
 
-//c2=g1|(p1&g0)|(p1&p0&cin),
 wire [1:0] w2;
 and(w2[0], p[1], g[0]);
 and(w2[1], p[1], p[0], cin);
 or(c[2], g[1], w2[0], w2[1]);
 
-//c3=g2|(p2&g1)|(p2&p1&g0)|(p2&p1&p0&cin),
 wire [2:0] w3;
 and(w3[0], p[2], g[1]);
 and(w3[1], p[2], p[1], g[0]);
 and(w3[2], p[2], p[1], p[0], cin);
 or(c[3], g[2], w3[0], w3[1], w3[2]);
 
-//c4=g3|(p3&g2)|(p3&p2&g1)|(p3&p2&p1&g0)|(p3&p2&p1&p0&cin);
 wire [3:0] w4;
 and(w4[0], p[3], g[2]);
 and(w4[1], p[3], p[2], g[1]);
@@ -130,19 +122,9 @@ and(w8[4], p[7], p[6], p[5], p[4], p[3], g[2]);
 and(w8[5], p[7], p[6], p[5], p[4], p[3], p[2], g[1]);
 and(w8[6], p[7], p[6], p[5], p[4], p[3], p[2], p[1], g[0]);
 and(w8[7], p[7], p[6], p[5], p[4], p[3], p[2], p[1], p[0], cin);
-or(c[8], g[7], w8[0], w8[1], w8[2], w8[3], w8[4], w8[5], w8[6], w8[7]);
+or(cout, g[7], w8[0], w8[1], w8[2], w8[3], w8[4], w8[5], w8[6], w8[7]);
 
-/*wire [8:0] w9;
-and(w9[0], p[8], g[7]);
-and(w9[1], p[8], p[7], g[6]);
-and(w9[2], p[8], p[7], p[6], g[5]);
-and(w9[3], p[8], p[7], p[6], p[5], g[4]);
-and(w9[4], p[8], p[7], p[6], p[5], p[4], g[3]);
-and(w9[5], p[8], p[7], p[6], p[5], p[4], p[3], g[2]);
-and(w9[6], p[8], p[7], p[6], p[5], p[4], p[3], p[2], g[1]);
-and(w9[7], p[8], p[7], p[6], p[5], p[4], p[3], p[2], p[1], g[0]);
-and(w9[8], p[8], p[7], p[6], p[5], p[4], p[3], p[2], p[1], p[0], cin);
-or(c[9], g[8], w9[0], w9[1], w9[2], w9[3], w9[4], w9[5], w9[6], w9[7], w9[8]);*/
+//assign cout= g[3] | (p[3]&g[2]) | p[3]&p[2]&g[1] | p[3]&p[2]&p[1]&g[0] | p[3]&p[2]&p[1]&p[0]&c[0];
+//assign sum=p^c;
 
-assign cout=c[8];
 endmodule
